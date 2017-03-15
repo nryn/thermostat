@@ -29,6 +29,10 @@ describe("Thermostat", function() {
   });
 
   it("cannot change the temperature below the minimum", function() {
-    expect(function() {thermostat._changeTemp(-11)}).toThrow()
+    expect(function() {thermostat._changeTemp(-11)}).toThrow();
+  });
+
+  it("cannot change the temperature above 25 if power saving mode is on", function() {
+    expect(function() {thermostat._changeTemp(6)}).toThrow();
   });
 });
