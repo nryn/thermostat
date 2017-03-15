@@ -1,3 +1,5 @@
+"use strict";
+
 describe("Thermostat", function() {
   var thermostat;
   var initial;
@@ -13,8 +15,8 @@ describe("Thermostat", function() {
   });
 
 
-  it("starts at 20 degrees", function() {
-    expect(thermostat.temp).toEqual(20);
+  it("starts at the default temperature", function() {
+    expect(thermostat.temp).toEqual(thermostat.DEFAULT_TEMP);
   });
 
   it("can increase the temperature", function() {
@@ -30,26 +32,43 @@ describe("Thermostat", function() {
   });
 
   it("cannot change the temperature below the minimum", function() {
-    expect(function() {thermostat._changeTemp(-11)}).toThrow();
+    thermostat.temp = thermostat.MINIMUM_TEMP;
+    expect(function() {thermostat._changeTemp(-1)}).toThrow();
   });
 
-  it("cannot change the temperature above 25 if power saving mode is on", function() {
-    expect(function() {thermostat._changeTemp(6)}).toThrow();
+  it("cannot change the temperature above the maxmimum if power saving mode is on", function() {
+    thermostat.temp = thermostat.POWER_SAVE_MAX;
+    expect(function() {thermostat._changeTemp(1)}).toThrow();
   });
 
-  it("cannot change the temperature above 32 if power saving mode is off", function() {
+  it("cannot change the temperature above the maximum if power saving mode is off", function() {
     thermostat.powerSaver = false;
-    expect(function() {thermostat._changeTemp(6)}).not.toThrow();
-    expect(function() {thermostat._changeTemp(13)}).toThrow();
+    thermostat.temp = thermostat.MAXIMUM_TEMP;
+    expect(function() {thermostat._changeTemp(1)}).toThrow();
   });
 
   it("knows when the maximum temperature has been reached in powersave mode", function() {
-    expect(thermostat._maxTempReached(6)).toBe(true);
+    expect(thermostat._maxTempReached(thermostat.POWER_SAVE_MAX - thermostat.DEFAULT_TEMP + 1)).toBe(true);
   });
 
   it("knows when the maximum temperature has been reached outside powersave mode", function() {
     thermostat.powerSaver = false;
-    expect(thermostat._maxTempReached(6)).toBe(false);
-    expect(thermostat._maxTempReached(13)).toBe(true);
+    expect(thermostat._maxTempReached(thermostat.POWER_SAVE_MAX - thermostat.DEFAULT_TEMP + 1)).toBe(false);
+    expect(thermostat._maxTempReached(thermostat.MAXIMUM_TEMP - thermostat.DEFAULT_TEMP + 1)).toBe(true);
+  });
+
+  it("has a reset button which sets temperature to default temperature", function() {
+    thermostat._changeTemp(5);
+    expect(thermostat.resetTemp()).toEqual(initial);
+  });
+
+  it("can tell us our energy usage", function () {
+    thermostat.temp = thermostat.MEDIUM_USAGE_THRESHOLD;
+    expect(thermostat.checkUsage()).toEqual("medium");
+    thermostat.temp = thermostat.LOW_USAGE_THRESHOLD;
+    expect(thermostat.checkUsage()).toEqual("low");
+    thermostat.powerSaver = false;
+    thermostat.temp = thermostat.MEDIUM_USAGE_THRESHOLD + 1;
+    expect(thermostat.checkUsage()).toEqual("high");
   });
 });
